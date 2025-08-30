@@ -1,0 +1,44 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Vorratskammer",
+        "description": "Sign in to your Supabase-backed Vorratskammer app.",
+        "data": {
+          "supabase_url": "Supabase URL",
+          "email": "Email",
+          "password": "Password",
+          "days_ahead": "Days ahead to check expiry",
+          "scan_summary": "Scan interval: Summary (sec)",
+          "scan_expiring": "Scan interval: Expiring (sec)",
+          "scan_locations": "Scan interval: Locations (sec)"
+        }
+      },
+      "reauth": {
+        "title": "Re-authenticate",
+        "description": "Please enter your password again.",
+        "data": {
+          "password": "Password"
+        }
+      }
+    },
+    "error": { "auth": "Login failed. Check URL, email, and password." },
+    "abort": {
+      "reauth_successful": "Re-authentication successful.",
+      "options_updated": "Options updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Vorratskammer Options",
+        "data": {
+          "days_ahead": "Days ahead to check expiry",
+          "scan_summary": "Scan interval: Summary (sec)",
+          "scan_expiring": "Scan interval: Expiring (sec)",
+          "scan_locations": "Scan interval: Locations (sec)"
+        }
+      }
+    }
+  }
+}

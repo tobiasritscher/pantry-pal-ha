@@ -1,0 +1,6 @@
+{
+  "name": "Vorratskammer",
+  "render_readme": true,
+  "domains": ["sensor"],
+  "country": "CH"
+}
