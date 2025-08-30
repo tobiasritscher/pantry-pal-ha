@@ -17,8 +17,8 @@ PLATFORMS = ["sensor"]
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     session = aiohttp_client.async_get_clientsession(hass)
     supabase_url: str = entry.data["supabase_url"]
-
-    api = VorratskammerAPI(session, supabase_url)
+    anon_key: str = entry.data["anon_key"]
+    api = VorratskammerAPI(session, supabase_url, anon_key)
 
     tokens: dict[str, Any] | None = hass.data.setdefault(DOMAIN, {}).setdefault(entry.entry_id, {}).get(STORAGE_TOKENS)
     if not tokens:

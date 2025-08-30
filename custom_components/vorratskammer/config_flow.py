@@ -13,6 +13,7 @@ from .api import VorratskammerAPI
 from .const import (
     DOMAIN,
     CONF_SUPABASE_URL,
+    CONF_ANON_KEY,
     CONF_EMAIL,
     CONF_PASSWORD,
     CONF_DAYS_AHEAD,
@@ -30,6 +31,7 @@ _LOGGER = logging.getLogger(__name__)
 STEP_USER_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_SUPABASE_URL, default="https://bscdbvbvylwqhkijhnub.supabase.co"): str,
+        vol.Required(CONF_ANON_KEY): str,
         vol.Required(CONF_EMAIL): str,
         vol.Required(CONF_PASSWORD): str,
         vol.Optional(CONF_DAYS_AHEAD, default=DEFAULT_DAYS_AHEAD): vol.All(int, vol.Range(min=1, max=60)),
@@ -48,7 +50,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Attempt login
         session = aiohttp_client.async_get_clientsession(self.hass)
-        api = VorratskammerAPI(session, user_input[CONF_SUPABASE_URL])
+        api = VorratskammerAPI(session, user_input[CONF_SUPABASE_URL], user_input[CONF_ANON_KEY])
         try:
             tokens = await api.login_password(user_input[CONF_EMAIL], user_input[CONF_PASSWORD])
         except Exception as err:
@@ -62,6 +64,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         data = {
             CONF_SUPABASE_URL: user_input[CONF_SUPABASE_URL],
+            CONF_ANON_KEY: user_input[CONF_ANON_KEY],
             CONF_EMAIL: user_input[CONF_EMAIL],
             # Do NOT store the plain password after setup
             "access_token": tokens.get("access_token"),

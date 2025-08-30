@@ -26,6 +26,12 @@ Settings → Devices & Services → **Add Integration** → search **Vorratskamm
 - Email & Password (for your Vorratskammer account)
 - Optional scan intervals and `days_ahead`
 
+During setup you must provide:
+
+- Supabase URL (e.g. https://...supabase.co)
+- **Supabase Anon (public) API key**
+- Email & Password
+
 Tokens are stored and auto-refreshed.
 
 ## Entities
