@@ -1,6 +1,7 @@
 DOMAIN = "vorratskammer"
 
 CONF_SUPABASE_URL = "supabase_url"        # e.g., https://bscdbvbvylwqhkijhnub.supabase.co
+CONF_ANON_KEY = "anon_key"
 CONF_EMAIL = "email"
 CONF_PASSWORD = "password"
 
