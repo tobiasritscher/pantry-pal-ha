@@ -39,6 +39,9 @@ async def async_setup_entry(
         VorratskammerGenericSensor(
             coords["locations"], entry.entry_id, "locations", "Pantry Locations", "locations", "mdi:home-group"
         ),
+        VorratskammerGenericSensor(
+            coords["location_items"], entry.entry_id, "location_items", "Pantry Location Items", "locations", "mdi:clipboard-list"
+        ),
     ]
     async_add_entities(entities)
 

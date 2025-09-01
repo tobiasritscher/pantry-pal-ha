@@ -107,3 +107,7 @@ class VorratskammerAPI:
     async def location_status(self, location_id: Optional[str] = None) -> Dict[str, Any]:
         params = {"location_id": location_id} if location_id else None
         return await self._call("ha-location-status", params=params)
+
+    async def location_items(self, location_id: Optional[str] = None) -> Dict[str, Any]:
+        params = {"location_id": location_id} if location_id else None
+        return await self._call("ha-location-items", params=params)

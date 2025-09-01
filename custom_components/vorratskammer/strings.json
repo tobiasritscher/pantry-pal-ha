@@ -6,6 +6,7 @@
         "description": "Sign in to your Supabase-backed Vorratskammer app.",
         "data": {
           "supabase_url": "Supabase URL",
+          "anon_key": "Supabase Anon (public) API key",
           "email": "Email",
           "password": "Password",
           "days_ahead": "Days ahead to check expiry",

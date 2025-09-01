@@ -62,9 +62,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Build coordinators here (so we can do the first refresh BEFORE forwarding platforms)
     opts = entry.options
     days_ahead = int(opts.get(CONF_DAYS_AHEAD, DEFAULT_DAYS_AHEAD))
+
     scan_summary = int(entry.data.get(CONF_SCAN_SUMMARY))
     scan_expiring = int(entry.data.get(CONF_SCAN_EXPIRING))
     scan_locations = int(entry.data.get(CONF_SCAN_LOCATIONS))
+    scan_location_items = scan_locations  # Use same interval as locations by default
 
     coord_summary = VorratskammerCoordinator(
         hass, "Vorratskammer Summary", scan_summary, api.inventory_summary
@@ -75,6 +77,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coord_locations = VorratskammerCoordinator(
         hass, "Vorratskammer Locations", scan_locations, api.location_status
     )
+    coord_location_items = VorratskammerCoordinator(
+        hass, "Vorratskammer Location Items", scan_location_items, api.location_items
+    )
 
     # First refresh BEFORE platform forward — if this fails, raise ConfigEntryNotReady here
     try:
@@ -82,6 +87,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             coord_summary.async_config_entry_first_refresh(),
             coord_expiring.async_config_entry_first_refresh(),
             coord_locations.async_config_entry_first_refresh(),
+            coord_location_items.async_config_entry_first_refresh(),
         )
     except Exception as err:
         # Any network/auth/function issue will be retried by HA
@@ -91,6 +97,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "summary": coord_summary,
         "expiring": coord_expiring,
         "locations": coord_locations,
+        "location_items": coord_location_items,
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
