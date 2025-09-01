@@ -67,10 +67,35 @@ class VorratskammerGenericSensor(CoordinatorEntity[VorratskammerCoordinator], Se
     @property
     def native_value(self) -> Optional[int]:
         data = self.coordinator.data or {}
+        # Special handling for location_items sensor
+        if self._attr_unique_id.endswith("location_items"):
+            # Use total_locations as state if present, else fallback to 0
+            return data.get("total_locations", 0)
         return data.get("state")
 
     @property
     def extra_state_attributes(self) -> Dict[str, Any]:
         data = self.coordinator.data or {}
+        # Special handling for location_items sensor
+        if self._attr_unique_id.endswith("location_items"):
+            # Flatten all items, sorted by location and then by expires
+            locations = data.get("locations", [])
+            all_items = []
+            for loc in locations:
+                loc_name = loc.get("location_name") or loc.get("name")
+                items = loc.get("attributes", {}).get("items", [])
+                for item in items:
+                    item_copy = dict(item)
+                    item_copy["location"] = loc_name
+                    item_copy["location_type"] = loc.get("location_type")
+                    all_items.append(item_copy)
+            # Sort by location, then by expires (nulls last)
+            def expires_key(x):
+                return (x["location"], x["expires"] or "9999-12-31")
+            all_items_sorted = sorted(all_items, key=expires_key)
+            # Expose both the original locations and the sorted flat list
+            attrs = dict(data)
+            attrs["all_items_sorted"] = all_items_sorted
+            return attrs
         attrs = data.get("attributes") or {}
         return attrs
