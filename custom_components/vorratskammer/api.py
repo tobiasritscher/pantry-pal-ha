@@ -8,6 +8,11 @@ import aiohttp
 
 _LOGGER = logging.getLogger(__name__)
 
+
+class RefreshTokenInvalid(RuntimeError):
+    """Raised when the stored refresh token is rejected by Supabase."""
+    pass
+
 class VorratskammerAPI:
     """Thin client for Supabase auth + Edge Functions."""
 
@@ -63,13 +68,24 @@ class VorratskammerAPI:
             raise RuntimeError("No refresh_token available.")
         url = f"{self._gotrue}/token?grant_type=refresh_token"
         payload = {"refresh_token": self._refresh_token}
-        async with self._session.post(url, json=payload, headers=self._auth_headers(), raise_for_status=True) as resp:
-            data = await resp.json()
+        async with self._session.post(url, json=payload, headers=self._auth_headers()) as resp:
+            text_body = None
+            try:
+                text_body = await resp.text()
+            except Exception:  # pragma: no cover
+                pass
+            if resp.status >= 400:
+                if text_body and "refresh_token_not_found" in text_body:
+                    raise RefreshTokenInvalid("Supabase reports refresh_token_not_found")
+                raise RuntimeError(f"Refresh failed HTTP {resp.status}: {text_body}")
+            try:
+                data = await resp.json()
+            except Exception as err:  # pragma: no cover
+                raise RuntimeError(f"Invalid JSON during refresh: {text_body}") from err
         self._access_token = data.get("access_token")
         self._refresh_token = data.get("refresh_token", self._refresh_token)
         if not self._access_token:
             raise RuntimeError(f"Failed to refresh access token: {data}")
-        # Optional: notify __init__ to persist tokens
         if hasattr(self, "_on_refresh"):
             await self._on_refresh()  # type: ignore
         return self._access_token
@@ -79,22 +95,36 @@ class VorratskammerAPI:
         async with self._lock:
             async with self._session.get(url, headers=self._function_headers(), params=params) as resp:
                 if resp.status == 401:
-                    await self.refresh()
-                    async with self._session.get(url, headers=self._function_headers(), params=params, raise_for_status=True) as r2:
+                    body = None
+                    try:
+                        body = await resp.text()
+                    except Exception:  # pragma: no cover
+                        pass
+                    _LOGGER.warning("401 from %s (body=%s) — attempting token refresh", path, body)
+                    if not self._refresh_token:
+                        raise RuntimeError("Unauthorized and no refresh token available; re-auth required.")
+                    try:
+                        await self.refresh()
+                    except Exception as refresh_err:  # pragma: no cover
+                        raise RuntimeError(f"Token refresh failed: {refresh_err}") from refresh_err
+                    # Retry once after refresh
+                    async with self._session.get(url, headers=self._function_headers(), params=params) as r2:
+                        if r2.status == 401:
+                            body2 = None
+                            try:
+                                body2 = await r2.text()
+                            except Exception:
+                                pass
+                            raise RuntimeError(f"Unauthorized after refresh when calling {path}: {body2}")
+                        r2.raise_for_status()
                         return await r2.json()
-                resp.raise_for_status()
-                return await resp.json()
-
-        async with self._lock:
-            # First try
-            async with self._session.get(url, headers=headers, params=params) as resp:
-                if resp.status == 401:
-                    _LOGGER.info("401 from %s — attempting token refresh", path)
-                    await self.refresh()
-                    headers["Authorization"] = f"Bearer {self._access_token}"
-                    # Retry once
-                    async with self._session.get(url, headers=headers, params=params, raise_for_status=True) as r2:
-                        return await r2.json()
+                if resp.status >= 400:
+                    txt = None
+                    try:
+                        txt = await resp.text()
+                    except Exception:  # pragma: no cover
+                        pass
+                    _LOGGER.error("HTTP %s calling %s params=%s body=%s", resp.status, path, params, txt)
                 resp.raise_for_status()
                 return await resp.json()
 

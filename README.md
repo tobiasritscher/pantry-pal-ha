@@ -1,10 +1,11 @@
 # Vorratskammer – Home Assistant Integration
 
-Custom integration that logs in to your Supabase-backed Vorratskammer app and exposes three sensors via your Edge Functions:
+Custom integration that logs in to your Supabase-backed Vorratskammer app and exposes four sensors via your Edge Functions:
 
 - `ha-inventory-summary`
 - `ha-expiring-items` (`days` configurable)
 - `ha-location-status`
+- `ha-location-items` (detailed items per location; provides `all_items_sorted` attribute)
 
 ## Install
 
@@ -39,10 +40,15 @@ Tokens are stored and auto-refreshed.
 - `sensor.pantry_inventory_summary`
 - `sensor.expiring_pantry_items`
 - `sensor.pantry_locations`
+- `sensor.pantry_location_items` (attributes include full location list + flattened `all_items_sorted`)
 
 These sensors mirror your function responses; attributes contain the payloads (items, counts, etc).
 
 ## Notes
+
+# Versioning
+
+Integration version is tracked in `manifest.json` and exported as `__version__` in `const.py`.
 
 - Auth via `POST /auth/v1/token?grant_type=password` and refresh via `grant_type=refresh_token`.
 - On 401 from functions, the integration refreshes the token and retries once.

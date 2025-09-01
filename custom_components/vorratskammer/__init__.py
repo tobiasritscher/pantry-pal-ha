@@ -6,10 +6,10 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryNotReady, ConfigEntryAuthFailed
 from homeassistant.helpers import aiohttp_client
 
-from .api import VorratskammerAPI
+from .api import VorratskammerAPI, RefreshTokenInvalid
 from .const import (
     DOMAIN,
     STORAGE_TOKENS,
@@ -89,8 +89,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             coord_locations.async_config_entry_first_refresh(),
             coord_location_items.async_config_entry_first_refresh(),
         )
+    except RefreshTokenInvalid as auth_err:
+        raise ConfigEntryAuthFailed(f"Refresh token invalid: {auth_err}") from auth_err
     except Exception as err:
-        # Any network/auth/function issue will be retried by HA
         raise ConfigEntryNotReady(f"Initial data update failed: {err}") from err
 
     store["coordinators"] = {
